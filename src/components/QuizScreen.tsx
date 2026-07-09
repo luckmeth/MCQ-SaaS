@@ -4,6 +4,7 @@ import type { QuizAction, QuizState } from '../quizReducer';
 import ProgressBar from './ProgressBar';
 import QuestionCard from './QuestionCard';
 import TimerRing from './TimerRing';
+import { CrossIcon } from './icons';
 
 interface Props {
   state: QuizState;
@@ -58,10 +59,11 @@ export default function QuizScreen({ state, dispatch, timerEnabled, questionSeco
       <div className="mb-6 flex items-center gap-3 sm:gap-4">
         <button
           onClick={onQuit}
-          className="flex-none rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/60 transition hover:border-white/25 hover:text-white"
+          className="flex flex-none items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/60 transition hover:border-white/25 hover:text-white"
           aria-label="Quit quiz"
         >
-          ✕ Quit
+          <CrossIcon className="h-3.5 w-3.5" />
+          Quit
         </button>
         <div className="flex-1">
           <ProgressBar current={currentIndex + 1} total={questions.length} />

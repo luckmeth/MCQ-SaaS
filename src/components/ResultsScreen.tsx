@@ -3,8 +3,10 @@ import { useMemo } from 'react';
 import type { QuizState } from '../quizReducer';
 import { formatTime } from '../utils';
 import Confetti from './Confetti';
+import Credit from './Credit';
 import ReviewItem from './ReviewItem';
 import ScoreRing from './ScoreRing';
+import { HomeIcon, MicroscopeIcon, PulseIcon, RetryIcon, SparkIcon, TrophyIcon } from './icons';
 
 interface Props {
   state: QuizState;
@@ -33,16 +35,16 @@ export default function ResultsScreen({ state, onRetry, onHome }: Props) {
 
   const celebrate = stats.pct >= 80;
 
-  const headline =
+  const { headline, HeadlineIcon } =
     stats.pct >= 90
-      ? 'Outstanding! 🏆'
+      ? { headline: 'Outstanding', HeadlineIcon: TrophyIcon }
       : stats.pct >= 80
-        ? 'Brilliant work! 🎉'
+        ? { headline: 'Brilliant work', HeadlineIcon: SparkIcon }
         : stats.pct >= 60
-          ? 'Solid effort 💪'
+          ? { headline: 'Solid effort', HeadlineIcon: PulseIcon }
           : stats.pct >= 40
-            ? 'Keep pushing 📚'
-            : 'Time to review 🔬';
+            ? { headline: 'Keep pushing', HeadlineIcon: PulseIcon }
+            : { headline: 'Time to review', HeadlineIcon: MicroscopeIcon };
 
   const listContainer = {
     hidden: {},
@@ -60,7 +62,12 @@ export default function ResultsScreen({ state, onRetry, onHome }: Props) {
         transition={{ type: 'spring', stiffness: 200, damping: 20 }}
         className="glass flex flex-col items-center rounded-3xl border border-white/10 p-6 text-center shadow-card sm:p-8"
       >
-        <p className="mb-4 text-2xl font-black text-white sm:text-3xl">{headline}</p>
+        <p className="mb-4 flex items-center gap-2.5 text-2xl font-black text-white sm:text-3xl">
+          <span className="text-brand-400">
+            <HeadlineIcon className="h-7 w-7 sm:h-8 sm:w-8" />
+          </span>
+          {headline}
+        </p>
         <ScoreRing percentage={stats.pct} />
         <p className="mt-4 text-white/60">
           You answered <span className="font-bold text-white">{stats.correct}</span> of{' '}
@@ -88,18 +95,20 @@ export default function ResultsScreen({ state, onRetry, onHome }: Props) {
           whileTap={{ scale: 0.97 }}
           transition={{ type: 'spring', stiffness: 400, damping: 20 }}
           onClick={onRetry}
-          className="flex-1 rounded-2xl bg-gradient-to-r from-brand-500 to-accent-violet px-6 py-3.5 font-bold text-white shadow-glow"
+          className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-500 to-accent-violet px-6 py-3.5 font-bold text-white shadow-glow"
         >
-          ↻ Retry (reshuffle)
+          <RetryIcon className="h-5 w-5" />
+          Retry (reshuffle)
         </motion.button>
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.97 }}
           transition={{ type: 'spring', stiffness: 400, damping: 20 }}
           onClick={onHome}
-          className="flex-1 rounded-2xl border border-white/15 bg-white/5 px-6 py-3.5 font-bold text-white/80 transition hover:bg-white/10"
+          className="flex flex-1 items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/5 px-6 py-3.5 font-bold text-white/80 transition hover:bg-white/10"
         >
-          ⌂ Home
+          <HomeIcon className="h-5 w-5" />
+          Home
         </motion.button>
       </div>
 
@@ -115,6 +124,8 @@ export default function ResultsScreen({ state, onRetry, onHome }: Props) {
           <ReviewItem key={q.id} question={q} userAnswer={answers[i]} index={i} />
         ))}
       </motion.div>
+
+      <Credit className="mt-10" />
     </div>
   );
 }

@@ -3,6 +3,8 @@ import { useMemo, useState } from 'react';
 import type { Difficulty, Question, Topic } from '../types';
 import type { QuizConfig } from '../utils';
 import { difficultyMeta } from '../utils';
+import Credit from './Credit';
+import { DnaIcon } from './icons';
 
 interface Props {
   bank: readonly Question[];
@@ -52,15 +54,16 @@ export default function StartScreen({ bank, onStart }: Props) {
       className="mx-auto flex min-h-[100dvh] w-full max-w-2xl flex-col justify-center px-4 py-10"
     >
       <motion.div variants={item} className="mb-6 flex items-center gap-3">
-        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-brand-500 to-accent-violet text-2xl shadow-glow">
-          🧬
+        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-brand-500 to-accent-violet text-white shadow-glow">
+          <DnaIcon className="h-7 w-7" />
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-brand-400">Biochemistry · Quiz Game</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-brand-400">Biomedical Science · Quiz Arena</p>
         </div>
       </motion.div>
 
       <motion.h1 variants={item} className="text-4xl font-black leading-[1.05] sm:text-6xl">
+        <span className="text-white/90">Ena&rsquo;s </span>
         <span className="text-gradient">BioChem Arena</span>
       </motion.h1>
       <motion.p variants={item} className="mt-4 max-w-lg text-white/60 sm:text-lg">
@@ -146,6 +149,10 @@ export default function StartScreen({ bank, onStart }: Props) {
       <motion.p variants={item} className="mt-3 text-center text-xs text-white/40">
         {available} questions available with the current filters
       </motion.p>
+
+      <motion.div variants={item} className="mt-8">
+        <Credit />
+      </motion.div>
     </motion.div>
   );
 }
