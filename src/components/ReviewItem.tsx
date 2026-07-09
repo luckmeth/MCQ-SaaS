@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import type { Question } from '../types';
-import { difficultyMeta } from '../utils';
+import { metaFor } from '../utils';
 import { CheckIcon, CrossIcon, DashIcon, SkipIcon } from './icons';
 
 interface Props {
@@ -18,7 +18,7 @@ export default function ReviewItem({ question, userAnswer, index }: Props) {
   const correct = question.correctIndex;
   const isSkipped = userAnswer === null;
   const isCorrect = userAnswer === correct;
-  const diff = difficultyMeta[question.difficulty];
+  const diff = metaFor(question.difficulty);
 
   const statusRing = isCorrect
     ? 'border-emerald-400/40'
