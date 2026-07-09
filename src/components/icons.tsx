@@ -156,3 +156,74 @@ export function SparkIcon(props: IconProps) {
     </svg>
   );
 }
+
+/** Stacked cartridges — the pack library. */
+export function LibraryIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="3" y="4" width="18" height="5" rx="1.5" />
+      <rect x="3" y="11" width="18" height="5" rx="1.5" />
+      <path d="M6.5 18.5h11" />
+    </svg>
+  );
+}
+
+/** Tray with a down-arrow — import. */
+export function ImportIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M12 3v10m0 0 3.5-3.5M12 13 8.5 9.5" />
+      <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />
+    </svg>
+  );
+}
+
+/** Up-arrow out of a tray — upload a file. */
+export function UploadIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M12 14V4m0 0 3.5 3.5M12 4 8.5 7.5" />
+      <path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" />
+    </svg>
+  );
+}
+
+/** Down-arrow to a line — download. */
+export function DownloadIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M12 4v10m0 0 3.5-3.5M12 14 8.5 10.5" />
+      <path d="M5 20h14" />
+    </svg>
+  );
+}
+
+/** Overlapping squares — copy to clipboard. */
+export function CopyIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="9" y="9" width="11" height="11" rx="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  );
+}
+
+/** Plus. */
+export function PlusIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+  );
+}
+
+/** Trash can — delete a pack. */
+export function TrashIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+      <path d="M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12" />
+      <path d="M10 11v6M14 11v6" />
+    </svg>
+  );
+}

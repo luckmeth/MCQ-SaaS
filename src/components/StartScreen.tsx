@@ -1,13 +1,20 @@
 import { motion } from 'framer-motion';
-import { useMemo, useState } from 'react';
-import type { Difficulty, Question, Topic } from '../types';
+import { useEffect, useMemo, useState } from 'react';
+import type { Difficulty, Question, QuestionPack } from '../types';
 import type { QuizConfig } from '../utils';
 import { difficultyMeta } from '../utils';
 import Credit from './Credit';
+import ImportPackModal from './ImportPackModal';
+import PackLibrary from './PackLibrary';
 import { DnaIcon } from './icons';
 
 interface Props {
   bank: readonly Question[];
+  packs: QuestionPack[];
+  activeId: string;
+  onSelectPack: (id: string) => void;
+  onDeletePack: (id: string) => void;
+  onImportPack: (pack: QuestionPack) => void;
   onStart: (config: QuizConfig, timerEnabled: boolean) => void;
 }
 
@@ -23,16 +30,33 @@ const item = {
   show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 240, damping: 22 } },
 };
 
-export default function StartScreen({ bank, onStart }: Props) {
+export default function StartScreen({
+  bank,
+  packs,
+  activeId,
+  onSelectPack,
+  onDeletePack,
+  onImportPack,
+  onStart,
+}: Props) {
   const [count, setCount] = useState(10);
-  const [topic, setTopic] = useState<Topic | 'All'>('All');
+  const [topic, setTopic] = useState<string | 'All'>('All');
   const [difficulty, setDifficulty] = useState<Difficulty | 'All'>('All');
   const [timerEnabled, setTimerEnabled] = useState(true);
+  const [importOpen, setImportOpen] = useState(false);
+
+  const activePack = packs.find((p) => p.id === activeId);
+
+  // Reset filters whenever the active pack changes — topics differ per pack.
+  useEffect(() => {
+    setTopic('All');
+    setDifficulty('All');
+  }, [activeId]);
 
   const topics = useMemo(() => {
-    const set = new Set<Topic>();
+    const set = new Set<string>();
     bank.forEach((q) => set.add(q.topic));
-    return ['All', ...Array.from(set)] as (Topic | 'All')[];
+    return ['All', ...Array.from(set)];
   }, [bank]);
 
   // How many questions actually match the current filters.
@@ -67,13 +91,34 @@ export default function StartScreen({ bank, onStart }: Props) {
         <span className="text-gradient">BioChem Arena</span>
       </motion.h1>
       <motion.p variants={item} className="mt-4 max-w-lg text-white/60 sm:text-lg">
-        Test yourself against <span className="font-semibold text-white">{bank.length}</span> medium-to-expert
-        questions drawn from carbohydrates, lipids, proteins, enzymes, nucleic acids and metabolism. Every run
-        reshuffles for a fresh challenge.
+        {activePack && !activePack.builtin ? (
+          <>
+            Playing <span className="font-semibold text-white">{activePack.name}</span> —{' '}
+            <span className="font-semibold text-white">{bank.length}</span>{' '}
+            question{bank.length === 1 ? '' : 's'}. Load a different pack any time; every run reshuffles.
+          </>
+        ) : (
+          <>
+            Test yourself against <span className="font-semibold text-white">{bank.length}</span> medium-to-expert
+            questions across biochemistry — or import your own pack and play any subject. Every run reshuffles for
+            a fresh challenge.
+          </>
+        )}
       </motion.p>
 
       {/* config panel */}
       <motion.div variants={item} className="glass mt-8 space-y-6 rounded-3xl border border-white/10 p-5 shadow-card sm:p-6">
+        {/* pack library */}
+        <PackLibrary
+          packs={packs}
+          activeId={activeId}
+          onSelect={onSelectPack}
+          onDelete={onDeletePack}
+          onImport={() => setImportOpen(true)}
+        />
+
+        <div className="h-px bg-white/10" />
+
         {/* number of questions */}
         <div>
           <label className="mb-2 block text-sm font-semibold text-white/70">Number of questions</label>
@@ -153,6 +198,8 @@ export default function StartScreen({ bank, onStart }: Props) {
       <motion.div variants={item} className="mt-8">
         <Credit />
       </motion.div>
+
+      <ImportPackModal open={importOpen} onClose={() => setImportOpen(false)} onImport={onImportPack} />
     </motion.div>
   );
 }

@@ -1,4 +1,4 @@
-import type { Difficulty, Question, Topic } from './types';
+import type { Difficulty, Question } from './types';
 
 /** Fisher–Yates shuffle — returns a new array, does not mutate the input. */
 export function shuffle<T>(input: readonly T[]): T[] {
@@ -12,7 +12,7 @@ export function shuffle<T>(input: readonly T[]): T[] {
 
 export interface QuizConfig {
   count: number;
-  topic: Topic | 'All';
+  topic: string | 'All';
   difficulty: Difficulty | 'All';
 }
 
@@ -34,7 +34,19 @@ export function formatTime(totalSeconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
-export const difficultyMeta: Record<Difficulty, { label: string; color: string; ring: string; dot: string }> = {
+interface DifficultyMeta {
+  label: string;
+  color: string;
+  ring: string;
+  dot: string;
+}
+
+/** Safe lookup — falls back to `medium` styling for any unexpected value. */
+export function metaFor(difficulty: string): DifficultyMeta {
+  return difficultyMeta[difficulty as Difficulty] ?? difficultyMeta.medium;
+}
+
+export const difficultyMeta: Record<Difficulty, DifficultyMeta> = {
   medium: {
     label: 'Medium',
     color: 'text-amber-300',

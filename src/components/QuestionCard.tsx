@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import type { Question } from '../types';
-import { difficultyMeta } from '../utils';
+import { metaFor } from '../utils';
 
 interface Props {
   question: Question;
@@ -12,7 +12,7 @@ interface Props {
 const OPTION_LABELS = ['A', 'B', 'C', 'D'];
 
 export default function QuestionCard({ question, selected, locked, onSelect }: Props) {
-  const diff = difficultyMeta[question.difficulty];
+  const diff = metaFor(question.difficulty);
 
   return (
     <div className="glass rounded-3xl border border-white/10 p-5 shadow-card sm:p-7">
