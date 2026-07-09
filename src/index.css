@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(1200px 600px at 15% -10%, rgba(91, 123, 255, 0.18), transparent 60%),
+    radial-gradient(1000px 500px at 100% 0%, rgba(167, 139, 250, 0.16), transparent 55%),
+    radial-gradient(900px 700px at 50% 120%, rgba(34, 211, 238, 0.12), transparent 60%),
+    #0b1020;
+  background-attachment: fixed;
+  color: #e6e9f5;
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Thin custom scrollbar for the review list */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(124, 156, 255, 0.35);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@layer utilities {
+  .glass {
+    background: rgba(17, 24, 52, 0.6);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .text-gradient {
+    background: linear-gradient(90deg, #7c9cff, #a78bfa 45%, #22d3ee);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  /* respect reduced-motion for the shimmer/float accents */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
