@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import type { Question } from '../types';
 import { difficultyMeta } from '../utils';
+import { CheckIcon, CrossIcon, DashIcon, SkipIcon } from './icons';
 
 interface Props {
   question: Question;
@@ -55,8 +56,14 @@ export default function ReviewItem({ question, userAnswer, index }: Props) {
 
           return (
             <div key={i} className={`${base} ${tone}`}>
-              <span className="grid h-5 w-5 flex-none place-items-center text-xs">
-                {isRight ? '✓' : isChosen ? '✕' : '·'}
+              <span className="grid h-5 w-5 flex-none place-items-center">
+                {isRight ? (
+                  <CheckIcon className="h-3.5 w-3.5" />
+                ) : isChosen ? (
+                  <CrossIcon className="h-3.5 w-3.5" />
+                ) : (
+                  <span className="h-1 w-1 rounded-full bg-current opacity-50" />
+                )}
               </span>
               <span className="min-w-0">{opt}</span>
               {isChosen && !isRight && (
@@ -68,7 +75,10 @@ export default function ReviewItem({ question, userAnswer, index }: Props) {
       </div>
 
       {isSkipped && (
-        <p className="mt-2 pl-1 text-xs font-medium text-amber-300/80">⏭ Skipped — no answer submitted</p>
+        <p className="mt-2 flex items-center gap-1.5 pl-1 text-xs font-medium text-amber-300/80">
+          <SkipIcon className="h-3.5 w-3.5" />
+          Skipped — no answer submitted
+        </p>
       )}
 
       {question.explanation && (
@@ -88,8 +98,14 @@ function StatusIcon({ isCorrect, isSkipped }: { isCorrect: boolean; isSkipped: b
       ? 'bg-white/10 text-white/50'
       : 'bg-rose-500/20 text-rose-300';
   return (
-    <span className={`grid h-7 w-7 flex-none place-items-center rounded-lg text-sm font-bold ${cls}`}>
-      {isCorrect ? '✓' : isSkipped ? '–' : '✕'}
+    <span className={`grid h-7 w-7 flex-none place-items-center rounded-lg ${cls}`}>
+      {isCorrect ? (
+        <CheckIcon className="h-4 w-4" />
+      ) : isSkipped ? (
+        <DashIcon className="h-4 w-4" />
+      ) : (
+        <CrossIcon className="h-4 w-4" />
+      )}
     </span>
   );
 }

@@ -1,11 +1,11 @@
-# 🧬 BioChem Arena
+# Ena's BioChem Arena
 
-An animated, game-like **MCQ quiz web app** for biochemistry, built from the
+An animated, game-like **MCQ quiz web app** for biomedical science, built from the
 lecture material in this repository. It ships with **500 questions** (medium,
 hard and expert difficulty — no easy questions) across nine topics, and every
 run reshuffles for a fresh challenge.
 
-## ✨ Features
+## Features
 
 - **Start screen** — pick the number of questions (10 / 20 / 30 / 50), filter by
   topic and difficulty, and toggle the 30-second timer.
@@ -66,7 +66,7 @@ without touching the UI. Topic coverage:
 Quiz state is managed with a single `useReducer` (`status`, `currentIndex`,
 `answers[]`, `startTime`, `endTime`).
 
-## 🚀 Getting started
+## Getting started
 
 ```bash
 npm install

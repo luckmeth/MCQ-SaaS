@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "BioChem Arena — an animated MCQ quiz game built on biochemistry lecture material",
+  "description": "Ena's BioChem Arena — an animated biomedical science MCQ quiz game built on biochemistry lecture material",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
