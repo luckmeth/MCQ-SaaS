@@ -48,3 +48,18 @@ export interface QuestionPack {
   createdAt: number;
   questions: Question[];
 }
+
+/** One completed quiz run, as recorded in the `attempts` table. */
+export interface QuizAttempt {
+  id: string;
+  studentName: string;
+  packId: string;
+  packName: string;
+  total: number;
+  correct: number;
+  wrong: number;
+  skipped: number;
+  percentage: number;
+  durationSeconds: number;
+  createdAt: number;
+}

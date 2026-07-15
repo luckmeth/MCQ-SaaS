@@ -14,8 +14,18 @@ import {
   savePack,
   setActivePackId,
 } from './lib/packDb';
+import { saveAttempt } from './lib/resultsDb';
 
 const QUESTION_SECONDS = 30;
+const STUDENT_NAME_KEY = 'ena-biochem:studentName';
+
+function readStudentName(): string {
+  try {
+    return window.localStorage.getItem(STUDENT_NAME_KEY) ?? '';
+  } catch {
+    return '';
+  }
+}
 
 /** The default cartridge — the built-in 500-question biochemistry bank. */
 const BUILTIN_PACK: QuestionPack = {
@@ -39,6 +49,17 @@ export default function App() {
   const [userPacks, setUserPacks] = useState<QuestionPack[]>([]);
   const [activeId, setActiveId] = useState<string>(() => getActivePackId() ?? BUILTIN_PACK.id);
   const [dbError, setDbError] = useState<string | null>(null);
+
+  // The player's name, persisted locally so it doesn't need retyping each visit.
+  const [studentName, setStudentNameState] = useState<string>(readStudentName);
+  const setStudentName = (name: string) => {
+    setStudentNameState(name);
+    try {
+      window.localStorage.setItem(STUDENT_NAME_KEY, name);
+    } catch {
+      /* storage unavailable — keep running from in-memory state */
+    }
+  };
 
   // Load the imported packs from the database on first mount.
   useEffect(() => {
@@ -93,11 +114,15 @@ export default function App() {
     }
   };
 
-  // Remember the last config so "Retry" can rebuild a freshly shuffled quiz.
+  // Remember the last config/pack so "Retry" can rebuild a freshly shuffled
+  // quiz, and so a finished attempt is attributed to the pack it was played
+  // from even if the active pack selection changes afterwards.
   const lastConfig = useRef<QuizConfig | null>(null);
+  const lastPack = useRef<{ id: string; name: string } | null>(null);
 
   const start = (config: QuizConfig, timer: boolean) => {
     lastConfig.current = config;
+    lastPack.current = { id: activePack.id, name: activePack.name };
     setTimerEnabled(timer);
     dispatch({ type: 'START', questions: buildQuiz(activePack.questions, config) });
   };
@@ -109,6 +134,40 @@ export default function App() {
   };
 
   const home = () => dispatch({ type: 'HOME' });
+
+  // Record the completed attempt to the database exactly once per finish.
+  const savedEndTime = useRef<number | null>(null);
+  useEffect(() => {
+    if (state.status !== 'finished' || state.endTime == null) return;
+    if (savedEndTime.current === state.endTime) return;
+    savedEndTime.current = state.endTime;
+
+    let correct = 0;
+    let wrong = 0;
+    let skipped = 0;
+    state.questions.forEach((q, i) => {
+      const a = state.answers[i];
+      if (a === null) skipped++;
+      else if (a === q.correctIndex) correct++;
+      else wrong++;
+    });
+    const total = state.questions.length;
+    const percentage = total ? Math.round((correct / total) * 100) : 0;
+    const durationSeconds = Math.max(0, Math.round((state.endTime - state.startTime) / 1000));
+    const pack = lastPack.current ?? { id: activePack.id, name: activePack.name };
+
+    saveAttempt({
+      studentName: studentName.trim() || 'Anonymous',
+      packId: pack.id,
+      packName: pack.name,
+      total,
+      correct,
+      wrong,
+      skipped,
+      percentage,
+      durationSeconds,
+    }).catch((e) => setDbError(`Couldn't save this attempt to the database: ${errMsg(e)}`));
+  }, [state.status, state.endTime, state.questions, state.answers, state.startTime, activePack, studentName]);
 
   return (
     <>
@@ -148,6 +207,8 @@ export default function App() {
               bank={activePack.questions}
               packs={packs}
               activeId={activeId}
+              studentName={studentName}
+              onStudentNameChange={setStudentName}
               onSelectPack={selectPack}
               onDeletePack={deletePack}
               onImportPack={importPack}

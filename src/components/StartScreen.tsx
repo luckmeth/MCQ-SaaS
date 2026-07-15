@@ -6,12 +6,15 @@ import { difficultyMeta } from '../utils';
 import Credit from './Credit';
 import ImportPackModal from './ImportPackModal';
 import PackLibrary from './PackLibrary';
-import { DnaIcon } from './icons';
+import ResultsHistoryModal from './ResultsHistoryModal';
+import { DnaIcon, HistoryIcon } from './icons';
 
 interface Props {
   bank: readonly Question[];
   packs: QuestionPack[];
   activeId: string;
+  studentName: string;
+  onStudentNameChange: (name: string) => void;
   onSelectPack: (id: string) => void;
   onDeletePack: (id: string) => void;
   onImportPack: (pack: QuestionPack) => void;
@@ -34,6 +37,8 @@ export default function StartScreen({
   bank,
   packs,
   activeId,
+  studentName,
+  onStudentNameChange,
   onSelectPack,
   onDeletePack,
   onImportPack,
@@ -44,6 +49,8 @@ export default function StartScreen({
   const [difficulty, setDifficulty] = useState<Difficulty | 'All'>('All');
   const [timerEnabled, setTimerEnabled] = useState(true);
   const [importOpen, setImportOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const nameMissing = !studentName.trim();
 
   const activePack = packs.find((p) => p.id === activeId);
 
@@ -77,13 +84,23 @@ export default function StartScreen({
       animate="show"
       className="mx-auto flex min-h-[100dvh] w-full max-w-2xl flex-col justify-center px-4 py-10"
     >
-      <motion.div variants={item} className="mb-6 flex items-center gap-3">
-        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-brand-500 to-accent-violet text-white shadow-glow">
-          <DnaIcon className="h-7 w-7" />
+      <motion.div variants={item} className="mb-6 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br from-brand-500 to-accent-violet text-white shadow-glow">
+            <DnaIcon className="h-7 w-7" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.25em] text-brand-400">Biomedical Science · Quiz Arena</p>
+          </div>
         </div>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-brand-400">Biomedical Science · Quiz Arena</p>
-        </div>
+        <button
+          type="button"
+          onClick={() => setHistoryOpen(true)}
+          className="flex flex-none items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-white/60 transition hover:border-white/25 hover:text-white"
+        >
+          <HistoryIcon className="h-4 w-4" />
+          <span className="hidden sm:inline">Results history</span>
+        </button>
       </motion.div>
 
       <motion.h1 variants={item} className="text-4xl font-black leading-[1.05] sm:text-6xl">
@@ -108,6 +125,22 @@ export default function StartScreen({
 
       {/* config panel */}
       <motion.div variants={item} className="glass mt-8 space-y-6 rounded-3xl border border-white/10 p-5 shadow-card sm:p-6">
+        {/* student name */}
+        <div>
+          <label className="mb-2 block text-sm font-semibold text-white/70">Your name</label>
+          <input
+            type="text"
+            value={studentName}
+            onChange={(e) => onStudentNameChange(e.target.value)}
+            placeholder="Enter your name"
+            maxLength={60}
+            className="w-full rounded-2xl border border-white/10 bg-base-900/60 px-4 py-3 text-sm text-white outline-none transition placeholder:text-white/25 focus:border-brand-400/60"
+          />
+          <p className="mt-1.5 text-xs text-white/40">Needed so your result can be saved to the history.</p>
+        </div>
+
+        <div className="h-px bg-white/10" />
+
         {/* pack library */}
         <PackLibrary
           packs={packs}
@@ -185,11 +218,11 @@ export default function StartScreen({
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.97 }}
         transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-        disabled={available === 0}
+        disabled={available === 0 || nameMissing}
         onClick={() => onStart({ count: effectiveCount, topic, difficulty }, timerEnabled)}
         className="mt-6 w-full rounded-2xl bg-gradient-to-r from-brand-500 to-accent-violet px-6 py-4 text-lg font-bold text-white shadow-glow-lg transition disabled:cursor-not-allowed disabled:opacity-40"
       >
-        {available === 0 ? 'No questions match' : `Start Quiz · ${effectiveCount} questions`}
+        {available === 0 ? 'No questions match' : nameMissing ? 'Enter your name to start' : `Start Quiz · ${effectiveCount} questions`}
       </motion.button>
       <motion.p variants={item} className="mt-3 text-center text-xs text-white/40">
         {available} questions available with the current filters
@@ -200,6 +233,7 @@ export default function StartScreen({
       </motion.div>
 
       <ImportPackModal open={importOpen} onClose={() => setImportOpen(false)} onImport={onImportPack} />
+      <ResultsHistoryModal open={historyOpen} onClose={() => setHistoryOpen(false)} />
     </motion.div>
   );
 }

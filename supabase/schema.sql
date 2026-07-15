@@ -47,6 +47,7 @@ alter table public.questions enable row level security;
 -- packs
 drop policy if exists "packs_public_read"   on public.packs;
 drop policy if exists "packs_public_write"  on public.packs;
+drop policy if exists "packs_public_update" on public.packs;
 drop policy if exists "packs_public_delete" on public.packs;
 create policy "packs_public_read"   on public.packs for select using (true);
 create policy "packs_public_write"  on public.packs for insert with check (true);
@@ -60,3 +61,42 @@ drop policy if exists "questions_public_delete" on public.questions;
 create policy "questions_public_read"   on public.questions for select using (true);
 create policy "questions_public_write"  on public.questions for insert with check (true);
 create policy "questions_public_delete" on public.questions for delete using (true);
+
+-- ============================================================================
+-- Quiz attempts — student name + results history
+-- ----------------------------------------------------------------------------
+-- Safe to run again even if you already applied the sections above: every
+-- statement here is idempotent (CREATE TABLE IF NOT EXISTS / DROP POLICY IF
+-- EXISTS + CREATE POLICY), so re-running this whole file won't touch existing
+-- packs/questions rows.
+-- ============================================================================
+
+-- One row per completed quiz. `pack_id` is deliberately NOT a foreign key: the
+-- built-in bank ('builtin') is never stored in `packs`, and history should
+-- keep making sense even after an imported pack is deleted — so `pack_name`
+-- is kept as plain text too, not looked up via a join.
+create table if not exists public.attempts (
+  id               uuid primary key default gen_random_uuid(),
+  student_name     text not null,
+  pack_id          text not null,
+  pack_name        text not null,
+  total            integer not null,
+  correct          integer not null,
+  wrong            integer not null,
+  skipped          integer not null,
+  percentage       integer not null,
+  duration_seconds integer not null,
+  created_at       timestamptz not null default now()
+);
+
+create index if not exists attempts_created_at_idx on public.attempts (created_at desc);
+create index if not exists attempts_student_name_idx on public.attempts (lower(student_name));
+
+-- Attempts are an append-only log from the client: readable and insertable,
+-- but not updatable/deletable, so history can't be tampered with after the fact.
+alter table public.attempts enable row level security;
+
+drop policy if exists "attempts_public_read"  on public.attempts;
+drop policy if exists "attempts_public_write" on public.attempts;
+create policy "attempts_public_read"  on public.attempts for select using (true);
+create policy "attempts_public_write" on public.attempts for insert with check (true);

@@ -217,6 +217,27 @@ export function PlusIcon(props: IconProps) {
   );
 }
 
+/** Clock with a back-curling arrow — results history. */
+export function HistoryIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M3.5 12a8.5 8.5 0 1 0 2.8-6.3" />
+      <path d="M3 4.5v4h4" />
+      <path d="M12 8v4.5l3 2" />
+    </svg>
+  );
+}
+
+/** Padlock — password-gated content. */
+export function LockIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="5" y="11" width="14" height="9" rx="2" />
+      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+    </svg>
+  );
+}
+
 /** Trash can — delete a pack. */
 export function TrashIcon(props: IconProps) {
   return (

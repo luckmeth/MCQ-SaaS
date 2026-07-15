@@ -7,8 +7,8 @@ run reshuffles for a fresh challenge.
 
 ## Features
 
-- **Start screen** — pick the number of questions (10 / 20 / 30 / 50), filter by
-  topic and difficulty, and toggle the 30-second timer.
+- **Start screen** — enter your name, pick the number of questions (10 / 20 / 30 / 50),
+  filter by topic and difficulty, and toggle the 30-second timer.
 - **Quiz screen** — one question at a time with:
   - an animated progress bar (`Question 3 of 10`)
   - question cards that slide/fade between questions (`AnimatePresence`)
@@ -24,6 +24,9 @@ run reshuffles for a fresh challenge.
     explanation for every question
   - **confetti** celebration when you score >= 80 %
   - **Retry** (reshuffles) and **Home** buttons
+- **Results history** — every completed quiz (name, pack, score, time taken,
+  when it happened) is saved to the database. A password-gated **Results
+  history** button on the start screen lists every student's attempts.
 
 ## Importable question packs (the "cartridge" system)
 
@@ -69,24 +72,27 @@ ready-made template.
 
 ## Database setup (Supabase)
 
-Imported packs are persisted to a [Supabase](https://supabase.com) Postgres
-database, so a pack you import is stored server-side (every question as its own
-row) rather than only in your browser.
+Imported packs — and every completed quiz attempt — are persisted to a
+[Supabase](https://supabase.com) Postgres database, so nothing lives only in
+your browser.
 
 **One-time setup**
 
 1. In your Supabase project, open **SQL Editor → New query**, paste the contents
    of [`supabase/schema.sql`](supabase/schema.sql), and **Run**. This creates the
-   `packs` and `questions` tables plus their access policies.
+   `packs`, `questions` and `attempts` tables plus their access policies. The
+   whole file is safe to re-run later (e.g. after pulling an update that adds a
+   new table) — every statement is idempotent and won't touch existing rows.
 2. Copy `.env.example` to `.env` and fill in your project values:
 
    ```bash
    VITE_SUPABASE_URL=https://<your-project-ref>.supabase.co
    VITE_SUPABASE_ANON_KEY=sb_publishable_xxxxxxxxxxxx
+   VITE_RESULTS_PASSWORD=<pick a password for the results-history screen>
    ```
 
-   Both are safe to expose in the browser (the publishable/anon key is public).
-   Restart `npm run dev` after editing `.env`.
+   The Supabase values are safe to expose in the browser (the publishable/anon
+   key is public). Restart `npm run dev` after editing `.env`.
 
 **Data model**
 
@@ -94,11 +100,19 @@ row) rather than only in your browser.
 | --- | --- |
 | `packs` | `id`, `name`, `description`, `author`, `builtin`, `created_at` |
 | `questions` | `id`, `pack_id` → `packs.id`, `position`, `question`, `options` (jsonb), `correct_index`, `difficulty`, `topic`, `explanation` |
+| `attempts` | `id`, `student_name`, `pack_id`, `pack_name`, `total`, `correct`, `wrong`, `skipped`, `percentage`, `duration_seconds`, `created_at` |
 
-The app has no login, so the pack library is **shared** — anyone using your
-deployment reads and writes the same packs. If `.env` is missing the app still
-runs against the built-in bank; imports just aren't saved. The built-in
-biochemistry bank is never written to the database.
+The app has no login, so the pack library and results history are **shared** —
+anyone using your deployment reads and writes the same data. If `.env` is
+missing the app still runs against the built-in bank; imports and attempts
+just aren't saved. The built-in biochemistry bank is never written to the
+database, and `attempts` is append-only from the client (no update/delete
+policy, so history can't be edited after the fact).
+
+`VITE_RESULTS_PASSWORD` gates the **Results history** button. Because it ships
+inside the client bundle, treat it as a casual deterrent (keeps casual
+students out), not real authentication — anyone who reads the page source can
+recover it.
 
 ## Question bank
 
@@ -136,7 +150,7 @@ topic coverage:
 - **Vite + React + TypeScript**
 - **Tailwind CSS** for styling (dark theme, `rounded-2xl` cards, glow shadows)
 - **Framer Motion** for all animations
-- **Supabase** (hosted Postgres) stores imported question packs
+- **Supabase** (hosted Postgres) stores imported question packs and every quiz attempt
 - The built-in 500-question bank still lives in a local file
 
 Quiz state is managed with a single `useReducer` (`status`, `currentIndex`,
@@ -164,12 +178,14 @@ src/
 ├── lib/
 │   ├── packImport.ts       # lenient JSON pack parser / normaliser
 │   ├── packDb.ts           # Supabase-backed pack library (load/save/delete)
+│   ├── resultsDb.ts        # Supabase-backed results history (save/load attempts)
 │   ├── supabaseClient.ts   # shared Supabase client (from env vars)
 │   └── aiPrompt.ts         # AI prompt, sample pack, download helpers
 └── components/
     ├── StartScreen.tsx
-    ├── PackLibrary.tsx      # the "shelf of cartridges"
-    ├── ImportPackModal.tsx  # paste / upload + AI helper
+    ├── PackLibrary.tsx        # the "shelf of cartridges"
+    ├── ImportPackModal.tsx    # paste / upload + AI helper
+    ├── ResultsHistoryModal.tsx # password-gated results history
     ├── QuizScreen.tsx
     ├── QuestionCard.tsx
     ├── ProgressBar.tsx
