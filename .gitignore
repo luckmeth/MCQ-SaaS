@@ -11,6 +11,10 @@ dist
 dist-ssr
 *.local
 
+# Local env (contains your Supabase keys) — keep .env.example committed instead
+.env
+.env.*.local
+
 # TS build outputs
 *.tsbuildinfo
 vite.config.js

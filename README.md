@@ -30,7 +30,8 @@ run reshuffles for a fresh challenge.
 The app is a reusable **console**; each question set is a swappable **cartridge**.
 The built-in biochemistry bank is just the default pack — you can generate more
 with any AI and import them at runtime, no rebuild required. Imported packs are
-saved to a **browser library** you can switch between and delete like game discs.
+saved to a **Supabase database** (a shared library) you can switch between and
+delete like game discs. See [Database setup](#database-setup-supabase) below.
 
 **Workflow**
 
@@ -65,6 +66,39 @@ to `General`) and `explanation` are optional; the correct answer may be given as
 assigned automatically. Invalid questions are skipped with a reported reason
 instead of failing the whole import. Use **Download sample** in the importer for a
 ready-made template.
+
+## Database setup (Supabase)
+
+Imported packs are persisted to a [Supabase](https://supabase.com) Postgres
+database, so a pack you import is stored server-side (every question as its own
+row) rather than only in your browser.
+
+**One-time setup**
+
+1. In your Supabase project, open **SQL Editor → New query**, paste the contents
+   of [`supabase/schema.sql`](supabase/schema.sql), and **Run**. This creates the
+   `packs` and `questions` tables plus their access policies.
+2. Copy `.env.example` to `.env` and fill in your project values:
+
+   ```bash
+   VITE_SUPABASE_URL=https://<your-project-ref>.supabase.co
+   VITE_SUPABASE_ANON_KEY=sb_publishable_xxxxxxxxxxxx
+   ```
+
+   Both are safe to expose in the browser (the publishable/anon key is public).
+   Restart `npm run dev` after editing `.env`.
+
+**Data model**
+
+| Table | Columns |
+| --- | --- |
+| `packs` | `id`, `name`, `description`, `author`, `builtin`, `created_at` |
+| `questions` | `id`, `pack_id` → `packs.id`, `position`, `question`, `options` (jsonb), `correct_index`, `difficulty`, `topic`, `explanation` |
+
+The app has no login, so the pack library is **shared** — anyone using your
+deployment reads and writes the same packs. If `.env` is missing the app still
+runs against the built-in bank; imports just aren't saved. The built-in
+biochemistry bank is never written to the database.
 
 ## Question bank
 
@@ -102,7 +136,8 @@ topic coverage:
 - **Vite + React + TypeScript**
 - **Tailwind CSS** for styling (dark theme, `rounded-2xl` cards, glow shadows)
 - **Framer Motion** for all animations
-- No backend — questions live in a local file
+- **Supabase** (hosted Postgres) stores imported question packs
+- The built-in 500-question bank still lives in a local file
 
 Quiz state is managed with a single `useReducer` (`status`, `currentIndex`,
 `answers[]`, `startTime`, `endTime`).
@@ -128,7 +163,8 @@ src/
 ├── hooks/useCountUp.ts     # score count-up animation
 ├── lib/
 │   ├── packImport.ts       # lenient JSON pack parser / normaliser
-│   ├── packStorage.ts      # localStorage-backed pack library
+│   ├── packDb.ts           # Supabase-backed pack library (load/save/delete)
+│   ├── supabaseClient.ts   # shared Supabase client (from env vars)
 │   └── aiPrompt.ts         # AI prompt, sample pack, download helpers
 └── components/
     ├── StartScreen.tsx
