@@ -38,7 +38,20 @@ const BUILTIN_PACK: QuestionPack = {
 };
 
 function errMsg(e: unknown): string {
-  return e instanceof Error ? e.message : String(e);
+  if (e instanceof Error) return e.message;
+  // Supabase/PostgREST errors are plain objects ({ message, details, hint, code }),
+  // not Error instances — String(e) would render a useless "[object Object]".
+  if (e && typeof e === 'object') {
+    const o = e as Record<string, unknown>;
+    const parts = [o.message, o.details, o.hint].filter((p): p is string => typeof p === 'string' && p.length > 0);
+    if (parts.length) return parts.join(' — ');
+    try {
+      return JSON.stringify(e);
+    } catch {
+      /* fall through */
+    }
+  }
+  return String(e);
 }
 
 export default function App() {
