@@ -33,6 +33,22 @@ export default function QuestionCard({ question, selected, locked, onSelect }: P
         {question.question}
       </h2>
 
+      {question.image && (
+        <figure className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
+          <img
+            src={question.image}
+            alt={question.imageAlt ?? 'Figure for this question'}
+            loading="lazy"
+            className="mx-auto max-h-72 w-full object-contain"
+          />
+          {question.imageAlt && (
+            <figcaption className="px-4 py-2 text-center text-xs text-white/40">
+              {question.imageAlt}
+            </figcaption>
+          )}
+        </figure>
+      )}
+
       <div className="mt-6 grid gap-3">
         {question.options.map((opt, i) => {
           const isSelected = selected === i;

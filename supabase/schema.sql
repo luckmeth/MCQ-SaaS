@@ -32,8 +32,14 @@ create table if not exists public.questions (
   correct_index integer not null,          -- 0-based index into options
   difficulty    text not null default 'medium',
   topic         text not null default 'General',
-  explanation   text
+  explanation   text,
+  image         text,                      -- optional figure: https:// or data: URI
+  image_alt     text                       -- optional caption / alt text
 );
+
+-- Backfill the image columns for projects created before they existed.
+alter table public.questions add column if not exists image     text;
+alter table public.questions add column if not exists image_alt text;
 
 create index if not exists questions_pack_id_idx on public.questions (pack_id);
 

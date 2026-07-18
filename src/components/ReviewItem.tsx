@@ -45,6 +45,17 @@ export default function ReviewItem({ question, userAnswer, index }: Props) {
         </div>
       </div>
 
+      {question.image && (
+        <figure className="mb-3 overflow-hidden rounded-xl border border-white/10 bg-white/[0.03]">
+          <img
+            src={question.image}
+            alt={question.imageAlt ?? 'Figure for this question'}
+            loading="lazy"
+            className="mx-auto max-h-52 w-full object-contain"
+          />
+        </figure>
+      )}
+
       <div className="space-y-1.5 pl-1">
         {question.options.map((opt, i) => {
           const isRight = i === correct;
