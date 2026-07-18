@@ -23,6 +23,8 @@ interface QuestionRow {
   difficulty: string;
   topic: string;
   explanation: string | null;
+  image: string | null;
+  image_alt: string | null;
 }
 
 /** Shape of a `packs` row joined with its nested `questions`. */
@@ -53,6 +55,8 @@ function rowToPack(row: PackRow): QuestionPack {
     difficulty: asDifficulty(q.difficulty),
     topic: q.topic,
     explanation: q.explanation ?? undefined,
+    image: q.image ?? undefined,
+    imageAlt: q.image_alt ?? undefined,
   }));
 
   return {
@@ -72,7 +76,7 @@ export async function loadPacks(): Promise<QuestionPack[]> {
     .from('packs')
     .select(
       'id,name,description,author,created_at,' +
-        'questions(position,question,options,correct_index,difficulty,topic,explanation)',
+        'questions(position,question,options,correct_index,difficulty,topic,explanation,image,image_alt)',
     )
     .order('created_at', { ascending: false });
 
@@ -110,6 +114,8 @@ export async function savePack(pack: QuestionPack): Promise<void> {
     difficulty: q.difficulty,
     topic: q.topic,
     explanation: q.explanation ?? null,
+    image: q.image ?? null,
+    image_alt: q.imageAlt ?? null,
   }));
 
   if (rows.length > 0) {

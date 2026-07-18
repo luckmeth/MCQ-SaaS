@@ -48,6 +48,17 @@ function normaliseDifficulty(value: unknown): Difficulty {
 }
 
 /**
+ * Accept an image only if it is a usable web/data source. Anything else (a bare
+ * filename, a relative path, junk) is dropped so the UI never renders a broken
+ * `<img>`.
+ */
+function normaliseImage(value: unknown): string | undefined {
+  const v = asString(value);
+  if (!v) return undefined;
+  return /^(https?:\/\/|data:image\/)/i.test(v) ? v : undefined;
+}
+
+/**
  * Resolve the correct-answer index from the several shapes an AI might emit:
  * a number index, a letter ("A"/"b"), or the exact option text. Returns -1 if
  * it can't be resolved.
@@ -110,6 +121,8 @@ function normaliseQuestion(
     difficulty: normaliseDifficulty(obj.difficulty ?? obj.level),
     topic: asString(obj.topic ?? obj.subject ?? obj.category) || 'General',
     explanation: asString(obj.explanation ?? obj.rationale ?? obj.reason) || undefined,
+    image: normaliseImage(obj.image ?? obj.imageUrl ?? obj.img ?? obj.picture),
+    imageAlt: asString(obj.imageAlt ?? obj.alt ?? obj.caption) || undefined,
   };
   return { question };
 }

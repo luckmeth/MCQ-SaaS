@@ -64,7 +64,9 @@ Use exactly this shape:
       "correctIndex": <0-based index of the correct option>,
       "difficulty": "medium" | "hard" | "expert",
       "topic": "<short subject label>",
-      "explanation": "<one sentence explaining the correct answer>"
+      "explanation": "<one sentence explaining the correct answer>",
+      "image": "<optional https:// image URL for a diagram/figure, or omit>",
+      "imageAlt": "<optional short caption for the image>"
     }
   ]
 }
@@ -74,6 +76,9 @@ Rules:
 - "correctIndex" is the position of the correct option (0 = first option).
 - Every question must have exactly one correct answer.
 - Keep questions accurate and unambiguous.
+- "image"/"imageAlt" are optional. Add an image only when a diagram genuinely
+  helps (anatomy, diagrams, micrographs). Use a real, publicly reachable
+  https:// URL — never a made-up link or a local file path.
 
 Now generate 20 questions about: <REPLACE WITH YOUR TOPIC>`;
 
@@ -84,6 +89,8 @@ export function packToJson(pack: QuestionPack): string {
     description: pack.description,
     author: pack.author,
     questions: pack.questions.map(({ id: _id, ...rest }) => rest),
+    // `rest` keeps every authoring field (topic, difficulty, explanation,
+    // image, imageAlt, …) so a round-tripped export re-imports identically.
   };
   return JSON.stringify(exportable, null, 2);
 }

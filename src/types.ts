@@ -31,6 +31,14 @@ export interface Question {
   topic: string;
   /** Short rationale shown on the results review screen. */
   explanation?: string;
+  /**
+   * Optional illustration for the question (a diagram, micrograph, etc.).
+   * A URL — either an `https://` link or a `data:` URI. Rendered above the
+   * options when present; questions without one behave exactly as before.
+   */
+  image?: string;
+  /** Optional alt text / caption for {@link image} (accessibility). */
+  imageAlt?: string;
 }
 
 /**

@@ -57,18 +57,45 @@ delete like game discs. See [Database setup](#database-setup-supabase) below.
       "correctIndex": 0,
       "difficulty": "medium",
       "topic": "Skeletal System",
-      "explanation": "optional — shown on the review screen"
+      "explanation": "optional — shown on the review screen",
+      "image": "optional — an https:// or data: image URI shown above the options",
+      "imageAlt": "optional — a short caption / alt text for the image"
     }
   ]
 }
 ```
 
 The importer is lenient: `difficulty` (defaults to `medium`), `topic` (defaults
-to `General`) and `explanation` are optional; the correct answer may be given as
-`correctIndex`, an option letter (`"A"`), or the exact option text; ids are
-assigned automatically. Invalid questions are skipped with a reported reason
-instead of failing the whole import. Use **Download sample** in the importer for a
-ready-made template.
+to `General`), `explanation` and `image`/`imageAlt` are all optional; the correct
+answer may be given as `correctIndex`, an option letter (`"A"`), or the exact
+option text; ids are assigned automatically. Invalid questions are skipped with a
+reported reason instead of failing the whole import. Use **Download sample** in the
+importer for a ready-made template.
+
+**Illustrated questions** — a question may carry an optional `image` (a diagram,
+micrograph, etc.) rendered above the answer options in both the quiz and the
+review screen. Only real image sources are accepted (an `https://` URL or a
+`data:image/...` URI); a bare filename or relative path is dropped so the UI never
+shows a broken image. Packs whose figures are embedded as `data:` URIs are fully
+self-contained and need no network access to display.
+
+## Ready-made illustrated packs
+
+The [`packs/`](packs) directory ships eight self-contained, image-rich anatomy &
+physiology cartridges built from the lecture slides — every figure is embedded as
+a `data:` URI, so they import and display with no external requests. Import any of
+them with **Import new pack → Upload .json file**.
+
+| Pack file | Questions | Figures |
+| --- | --- | --- |
+| `cell.json` — The Cell: structure & organelles | 40 | 14 |
+| `tissues.json` — Tissues & organ systems | 40 | 11 |
+| `circulatory.json` — Cardiovascular system: blood & heart | 40 | 12 |
+| `respiratory.json` — Respiratory system | 40 | 14 |
+| `digestive.json` — Digestive system | 40 | 15 |
+| `histology.json` — Introduction to histology | 20 | 5 |
+| `fertilization.json` — Fertilization & early development | 20 | 6 |
+| `celldivision.json` — Cell division: mitosis & meiosis | 20 | 10 |
 
 ## Database setup (Supabase)
 
@@ -99,7 +126,7 @@ your browser.
 | Table | Columns |
 | --- | --- |
 | `packs` | `id`, `name`, `description`, `author`, `builtin`, `created_at` |
-| `questions` | `id`, `pack_id` → `packs.id`, `position`, `question`, `options` (jsonb), `correct_index`, `difficulty`, `topic`, `explanation` |
+| `questions` | `id`, `pack_id` → `packs.id`, `position`, `question`, `options` (jsonb), `correct_index`, `difficulty`, `topic`, `explanation`, `image`, `image_alt` |
 | `attempts` | `id`, `student_name`, `pack_id`, `pack_name`, `total`, `correct`, `wrong`, `skipped`, `percentage`, `duration_seconds`, `created_at` |
 
 The app has no login, so the pack library and results history are **shared** —
@@ -127,6 +154,8 @@ interface Question {
   difficulty: 'medium' | 'hard' | 'expert';
   topic: string;
   explanation?: string;
+  image?: string;      // optional figure (https:// or data: URI)
+  imageAlt?: string;   // optional caption / alt text
 }
 ```
 
