@@ -11,9 +11,12 @@ dist
 dist-ssr
 *.local
 
-# Local env (contains your Supabase keys) — keep .env.example committed instead
+# Local env (contains server-side secrets) - keep .env.example committed instead
 .env
 .env.*.local
+
+# Neon local project context
+.neon
 
 # TS build outputs
 *.tsbuildinfo

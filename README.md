@@ -33,8 +33,8 @@ run reshuffles for a fresh challenge.
 The app is a reusable **console**; each question set is a swappable **cartridge**.
 The built-in biochemistry bank is just the default pack — you can generate more
 with any AI and import them at runtime, no rebuild required. Imported packs are
-saved to a **Supabase database** (a shared library) you can switch between and
-delete like game discs. See [Database setup](#database-setup-supabase) below.
+saved to a **Neon Postgres database** (a shared library) you can switch between and
+delete like game discs. See [Database setup](#database-setup-neon) below.
 
 **Workflow**
 
@@ -97,49 +97,69 @@ them with **Import new pack → Upload .json file**.
 | `fertilization.json` — Fertilization & early development | 20 | 6 |
 | `celldivision.json` — Cell division: mitosis & meiosis | 20 | 10 |
 
-## Database setup (Supabase)
+## Database setup (Neon)
 
-Imported packs — and every completed quiz attempt — are persisted to a
-[Supabase](https://supabase.com) Postgres database, so nothing lives only in
-your browser.
+Imported packs and every completed quiz attempt are persisted to a [Neon](https://neon.tech) Postgres database, so nothing lives only in your browser. The browser talks to the local server API under `/api`; `DATABASE_URL` stays server-side.
 
 **One-time setup**
 
-1. In your Supabase project, open **SQL Editor → New query**, paste the contents
-   of [`supabase/schema.sql`](supabase/schema.sql), and **Run**. This creates the
-   `packs`, `questions` and `attempts` tables plus their access policies. The
-   whole file is safe to re-run later (e.g. after pulling an update that adds a
-   new table) — every statement is idempotent and won't touch existing rows.
+1. Link the project to Neon and apply the schema:
+
+   ```bash
+   neon link --project-id <project-id> --branch production -y
+   npm run db:schema
+   ```
+
+   This creates the `packs`, `questions` and `attempts` tables. The schema is safe to re-run later; every statement is idempotent and won't touch existing rows.
 2. Copy `.env.example` to `.env` and fill in your project values:
 
    ```bash
-   VITE_SUPABASE_URL=https://<your-project-ref>.supabase.co
-   VITE_SUPABASE_ANON_KEY=sb_publishable_xxxxxxxxxxxx
+   DATABASE_URL=postgresql://USER:PASSWORD@HOST/neondb?sslmode=require&channel_binding=require
    VITE_RESULTS_PASSWORD=<pick a password for the results-history screen>
    ```
 
-   The Supabase values are safe to expose in the browser (the publishable/anon
-   key is public). Restart `npm run dev` after editing `.env`.
+   `DATABASE_URL` is a server-side secret. Do not add a `VITE_` prefix and do not reference it from browser code. Restart `npm run dev` after editing `.env`.
 
 **Data model**
 
 | Table | Columns |
 | --- | --- |
 | `packs` | `id`, `name`, `description`, `author`, `builtin`, `created_at` |
-| `questions` | `id`, `pack_id` → `packs.id`, `position`, `question`, `options` (jsonb), `correct_index`, `difficulty`, `topic`, `explanation`, `image`, `image_alt` |
+| `questions` | `id`, `pack_id` -> `packs.id`, `position`, `question`, `options` (jsonb), `correct_index`, `difficulty`, `topic`, `explanation`, `image`, `image_alt` |
 | `attempts` | `id`, `student_name`, `pack_id`, `pack_name`, `total`, `correct`, `wrong`, `skipped`, `percentage`, `duration_seconds`, `created_at` |
 
-The app has no login, so the pack library and results history are **shared** —
-anyone using your deployment reads and writes the same data. If `.env` is
-missing the app still runs against the built-in bank; imports and attempts
-just aren't saved. The built-in biochemistry bank is never written to the
-database, and `attempts` is append-only from the client (no update/delete
-policy, so history can't be edited after the fact).
+The app has no login, so the pack library and results history are **shared**: anyone using your deployment reads and writes the same data through the server API. If `.env` is missing the app still runs against the built-in bank; imports and attempts just aren't saved. The built-in biochemistry bank is never written to the database.
 
-`VITE_RESULTS_PASSWORD` gates the **Results history** button. Because it ships
-inside the client bundle, treat it as a casual deterrent (keeps casual
-students out), not real authentication — anyone who reads the page source can
-recover it.
+`VITE_RESULTS_PASSWORD` gates the **Results history** button. Because it ships inside the client bundle, treat it as a casual deterrent (keeps casual students out), not real authentication; anyone who reads the page source can recover it.
+
+## Deploying to Vercel
+
+The same API runs three ways from one implementation in `server/api.mjs`: as Vite
+middleware during `npm run dev`, inside `server.mjs` for `npm run preview`, and as
+a Vercel serverless function through the catch-all in `api/[...path].mjs`.
+
+**Environment variables** — set these in *Project -> Settings -> Environment
+Variables*, ticked for **Production**, **Preview** and **Development**:
+
+| Name | Value | Notes |
+| --- | --- | --- |
+| `DATABASE_URL` | your Neon **pooled** connection string | Server-side secret. No `VITE_` prefix — that would publish it in the browser bundle. |
+| `VITE_RESULTS_PASSWORD` | password for the results screen | Baked into the client bundle at build time, so changing it needs a redeploy. |
+
+Use the pooled host (the one containing `-pooler`). Serverless functions open a
+new connection per invocation, and the pooler is what keeps that from exhausting
+Neon's connection limit.
+
+Vercel reads environment variables **at build time**, so after adding or changing
+one you must redeploy — an existing deployment will not pick it up.
+
+**Checking a deployment** — `https://<your-app>.vercel.app/api/health` returns
+`{"ok":true}` when the function is live. If it returns a 500, `DATABASE_URL` is
+missing or wrong; if it 404s, the `api/` directory wasn't deployed.
+
+**Request size** — Vercel rejects a request body over 4.5 MB. Packs with embedded
+base64 figures exceed that, so `savePack` splits large packs across one `PUT
+/api/packs` plus as many `POST /api/packs/:id/questions` appends as needed.
 
 ## Question bank
 
@@ -179,7 +199,7 @@ topic coverage:
 - **Vite + React + TypeScript**
 - **Tailwind CSS** for styling (dark theme, `rounded-2xl` cards, glow shadows)
 - **Framer Motion** for all animations
-- **Supabase** (hosted Postgres) stores imported question packs and every quiz attempt
+- **Neon Postgres** stores imported question packs and every quiz attempt behind a small server API
 - The built-in 500-question bank still lives in a local file
 
 Quiz state is managed with a single `useReducer` (`status`, `currentIndex`,
@@ -197,6 +217,11 @@ npm run preview  # preview the production build
 ## Component structure
 
 ```
+api/[...path].mjs           # Vercel serverless entry for every /api/* route
+server/api.mjs              # the API itself: routing + SQL (shared by all hosts)
+server.mjs                  # static file server + API for `npm run preview`
+neon/schema.sql             # packs / questions / attempts tables
+
 src/
 ├── App.tsx                 # screen orchestration + pack library state
 ├── quizReducer.ts          # quiz state machine
@@ -206,9 +231,9 @@ src/
 ├── hooks/useCountUp.ts     # score count-up animation
 ├── lib/
 │   ├── packImport.ts       # lenient JSON pack parser / normaliser
-│   ├── packDb.ts           # Supabase-backed pack library (load/save/delete)
-│   ├── resultsDb.ts        # Supabase-backed results history (save/load attempts)
-│   ├── supabaseClient.ts   # shared Supabase client (from env vars)
+│   ├── apiClient.ts        # shared browser API helper
+│   ├── packDb.ts           # Neon-backed pack library (load/save/delete)
+│   ├── resultsDb.ts        # Neon-backed results history (save/load attempts)
 │   └── aiPrompt.ts         # AI prompt, sample pack, download helpers
 └── components/
     ├── StartScreen.tsx
