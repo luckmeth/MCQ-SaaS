@@ -4,13 +4,61 @@ const MAX_BODY_BYTES = 50 * 1024 * 1024;
 
 let pool;
 
+/**
+ * Clean up the ways a connection string commonly arrives mangled from a
+ * dashboard paste. The Neon driver parses it with `new URL()` and rethrows a
+ * bare "Invalid URL", which says nothing about which variable is wrong, so we
+ * normalise first and explain the problem ourselves.
+ */
+function normalizeConnectionString(raw) {
+  let value = raw.trim();
+
+  // A whole `DATABASE_URL=postgres://...` line, or a `psql '...'` command.
+  value = value.replace(/^(export\s+)?DATABASE_URL\s*=\s*/i, '').replace(/^psql\s+/i, '');
+
+  // Surrounding quotes, which .env files use as syntax but a dashboard field
+  // treats as part of the value.
+  value = value.trim();
+  if (value.length >= 2 && (value.startsWith('"') || value.startsWith("'"))) {
+    const quote = value[0];
+    if (value.endsWith(quote)) value = value.slice(1, -1);
+  }
+
+  // A URL cannot contain raw whitespace, so any left is paste damage - most
+  // often a line break from a wrapped connection string.
+  return value.replace(/\s+/g, '');
+}
+
 function getPool() {
-  if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL is not set.');
+  const raw = process.env.DATABASE_URL;
+  if (!raw || !raw.trim()) {
+    throw new Error(
+      'DATABASE_URL is not set. Add it in Vercel under Settings > Environment Variables, then redeploy.',
+    );
   }
 
   if (!pool) {
-    pool = new Pool({ connectionString: process.env.DATABASE_URL });
+    const connectionString = normalizeConnectionString(raw);
+
+    let parsed;
+    try {
+      parsed = new URL(connectionString);
+    } catch {
+      // Never echo the value itself - it carries the database password.
+      throw new Error(
+        'DATABASE_URL is not a valid connection string. Paste it without surrounding ' +
+          'quotes and with no line breaks; it should start with postgresql:// and end with ' +
+          '?sslmode=require&channel_binding=require',
+      );
+    }
+
+    if (parsed.protocol !== 'postgresql:' && parsed.protocol !== 'postgres:') {
+      throw new Error(
+        `DATABASE_URL must start with postgresql://, but starts with ${parsed.protocol}//`,
+      );
+    }
+
+    pool = new Pool({ connectionString });
   }
 
   return pool;
@@ -340,7 +388,19 @@ export async function handleApiRequest(req, res, pathOverride) {
 
   try {
     if (path === '/api/health') {
-      sendJson(res, 200, { ok: true });
+      // Actually reach the database. A health check that only proves the
+      // function booted is the one that tells you everything is fine while
+      // every save is failing.
+      try {
+        await getPool().query('select 1');
+        sendJson(res, 200, { ok: true, database: 'connected' });
+      } catch (error) {
+        sendJson(res, 500, {
+          ok: false,
+          database: 'unavailable',
+          error: error instanceof Error ? error.message : 'Unknown database error.',
+        });
+      }
       return true;
     }
 

@@ -153,9 +153,23 @@ Neon's connection limit.
 Vercel reads environment variables **at build time**, so after adding or changing
 one you must redeploy — an existing deployment will not pick it up.
 
-**Checking a deployment** — `https://<your-app>.vercel.app/api/health` returns
-`{"ok":true}` when the function is live. If it returns a 500, `DATABASE_URL` is
-missing or wrong; if it 404s, the `api/` directory wasn't deployed.
+Paste the connection string **bare** — no surrounding quotes, no line breaks. A
+`.env` file uses `DATABASE_URL='postgres://...'` because quotes are that format's
+syntax, but a dashboard field stores them as part of the value. The server strips
+quotes, stray whitespace and an accidental `DATABASE_URL=` prefix defensively,
+but it is worth getting right.
+
+**Checking a deployment** — `https://<your-app>.vercel.app/api/health` runs a real
+query and returns `{"ok":true,"database":"connected"}`. Anything else names the
+problem:
+
+| Response | Meaning |
+| --- | --- |
+| `{"ok":true,"database":"connected"}` | Working. |
+| `404` | The `api/` directory wasn't deployed. |
+| `"DATABASE_URL is not set..."` | The variable is missing, or you added it without redeploying. |
+| `"DATABASE_URL is not a valid connection string..."` | Quotes or a line break got pasted into the value. |
+| `password authentication failed` | The credentials are wrong or have been rotated. |
 
 **Request size** — Vercel rejects a request body over 4.5 MB. Packs with embedded
 base64 figures exceed that, so `savePack` splits large packs across one `PUT
