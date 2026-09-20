@@ -18,7 +18,7 @@ function scoreTone(pct: number): string {
   return 'bg-rose-500/15 text-rose-300';
 }
 
-/** Password-gated list of every student's quiz attempts, pulled from Supabase. */
+/** Password-gated list of every student's quiz attempts, pulled from Neon. */
 export default function ResultsHistoryModal({ open, onClose }: Props) {
   const [password, setPassword] = useState('');
   const [unlocked, setUnlocked] = useState(false);

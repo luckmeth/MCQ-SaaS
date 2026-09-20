@@ -39,7 +39,7 @@ const BUILTIN_PACK: QuestionPack = {
 
 function errMsg(e: unknown): string {
   if (e instanceof Error) return e.message;
-  // Supabase/PostgREST errors are plain objects ({ message, details, hint, code }),
+  // API/database errors may be plain objects ({ message, details, hint, code }),
   // not Error instances — String(e) would render a useless "[object Object]".
   if (e && typeof e === 'object') {
     const o = e as Record<string, unknown>;
@@ -58,7 +58,7 @@ export default function App() {
   const [state, dispatch] = useReducer(quizReducer, initialState);
   const [timerEnabled, setTimerEnabled] = useState(true);
 
-  // Question-pack library (built-in + user-imported). User packs live in Supabase.
+  // Question-pack library (built-in + user-imported). User packs live in Neon.
   const [userPacks, setUserPacks] = useState<QuestionPack[]>([]);
   const [activeId, setActiveId] = useState<string>(() => getActivePackId() ?? BUILTIN_PACK.id);
   const [dbError, setDbError] = useState<string | null>(null);
@@ -100,7 +100,7 @@ export default function App() {
     setActivePackId(id);
   };
 
-  // Optimistically add the pack, then persist every question to Supabase.
+  // Optimistically add the pack, then persist every question to Neon.
   const importPack = async (pack: QuestionPack) => {
     setDbError(null);
     setUserPacks((prev) => [pack, ...prev.filter((p) => p.id !== pack.id)]);
